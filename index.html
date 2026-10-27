@@ -471,11 +471,50 @@
       align-items: center;
       gap: 0.4rem;
       white-space: nowrap;
-      transition: transform 0.15s, background 0.2s;
+      scale: 1;
+      transition: scale 0.15s, background 0.2s;
     }
 
     .gps-btn:active {
-      transform: scale(0.96);
+      scale: 0.96;
+    }
+
+    .refresh-btn {
+      min-height: 2.85rem;
+      min-width: 2.85rem;
+      padding: 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #ffffff;
+      font-size: 1rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      /* Identity transforms to prevent stacking context shifts (individual-transform-properties) */
+      scale: 1;
+      transition: scale 0.15s ease, background 0.2s ease;
+    }
+
+    .refresh-btn:active {
+      scale: 0.92;
+    }
+
+    .refresh-btn .lucide {
+      rotate: 0deg;
+    }
+
+    .refresh-btn.spinning .lucide {
+      animation: spinRefresh 0.75s linear infinite;
+    }
+
+    @keyframes spinRefresh {
+      from { rotate: 0deg; }
+      to { rotate: 360deg; }
     }
 
     /* Autocomplete Results Dropdown */
@@ -1246,6 +1285,9 @@
           <span aria-hidden="true" id="gpsBtnIcon"></span>
           <span class="aligned-label">GPS</span>
         </button>
+        <button type="button" id="refreshBtn" class="refresh-btn" title="Ανανέωση δεδομένων καιρού" aria-label="Ανανέωση δεδομένων καιρού">
+          <span aria-hidden="true" id="refreshBtnIcon"></span>
+        </button>
       </div>
 
       <!-- User's Personal Saved Cities Scroller (Empty until user adds cities) -->
@@ -1526,7 +1568,8 @@
       'footprints': '<path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/>',
       'layers': '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
       'sunrise': '<path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/>',
-      'flower-2': '<path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1"/><circle cx="12" cy="8" r="2"/><path d="M12 10v12"/><path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z"/><path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z"/>'
+      'flower-2': '<path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1"/><circle cx="12" cy="8" r="2"/><path d="M12 10v12"/><path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z"/><path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z"/>',
+      'refresh-cw': '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>'
     };
 
     function lucideSvg(name, extraClass = '') {
@@ -1620,6 +1663,7 @@
       clearBtn: document.getElementById('clearSearchBtn'),
       searchResults: document.getElementById('searchResults'),
       gpsBtn: document.getElementById('gpsBtn'),
+      refreshBtn: document.getElementById('refreshBtn'),
       savedCitiesBar: document.getElementById('savedCitiesBar'),
       saveCityBtn: document.getElementById('saveCityBtn'),
       saveCityIcon: document.getElementById('saveCityIcon'),
@@ -1805,6 +1849,7 @@
       document.getElementById('searchBoxIcon').innerHTML = lucideSvg('search');
       els.clearBtn.innerHTML = lucideSvg('x');
       document.getElementById('gpsBtnIcon').innerHTML = lucideSvg('locate-fixed');
+      document.getElementById('refreshBtnIcon').innerHTML = lucideSvg('refresh-cw');
       els.badgeIcon.innerHTML = lucideSvg('map-pin');
       els.currentIcon.innerHTML = lucideSvg('cloud-sun');
       document.getElementById('advisorHeaderIcon').innerHTML = lucideSvg('sparkles');
@@ -1837,6 +1882,7 @@
 
     async function fetchWeatherForLocation(loc) {
       showStatus('');
+      els.refreshBtn.classList.add('spinning');
       els.badgeIcon.innerHTML = lucideSvg(loc.isGps ? 'navigation' : 'map-pin');
       els.badgeText.textContent = loc.isGps ? 'Τρέχουσα Τοποθεσία (GPS)' : (loc.country || 'Επιλεγμένη Πόλη');
       els.cityName.textContent = loc.name;
@@ -1897,6 +1943,8 @@
         } else {
           showStatus('Δεν ήταν δυνατή η σύνδεση με την υπηρεσία καιρού. Ελέγξτε το internet σας.');
         }
+      } finally {
+        els.refreshBtn.classList.remove('spinning');
       }
     }
 
@@ -2643,6 +2691,14 @@
 
     els.gpsBtn.addEventListener('click', () => {
       detectGpsLocation(false);
+    });
+
+    els.refreshBtn.addEventListener('click', () => {
+      if (activeLocation) {
+        fetchWeatherForLocation(activeLocation);
+      } else {
+        detectGpsLocation(false);
+      }
     });
 
     els.saveCityBtn.addEventListener('click', () => {

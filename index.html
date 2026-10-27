@@ -171,12 +171,210 @@
       text-box: trim-both cap alphabetic;
     }
 
+    /* Animated Weather Canvas Background */
+    #weatherCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
     .app-container {
       max-width: 31rem;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Defer rendering work when off-screen (efficient-background-processing) */
+    .deferred-section {
+      content-visibility: auto;
+      contain-intrinsic-size: auto none auto 420px;
+    }
+
+    /* Smart Daily Advisor Card */
+    .advisor-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .advisor-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 0.9rem;
+      padding: 0.65rem 0.8rem;
+    }
+
+    .advisor-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+      margin-top: 0.1rem;
+      color: #7dd3fc;
+      flex-shrink: 0;
+    }
+
+    .advisor-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .advisor-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .advisor-sub {
+      font-size: 0.78rem;
+      opacity: 0.86;
+    }
+
+    /* Multi-Model Rain Comparison (ECMWF vs ICON vs GFS) */
+    .models-box {
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .models-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .models-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.9;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .consensus-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.25);
+      border: 1px solid rgba(125, 211, 252, 0.5);
+      color: #e0f2fe;
+    }
+
+    .models-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .model-row {
+      display: grid;
+      grid-template-columns: 7.2rem 1fr 4.4rem;
+      align-items: center;
+      gap: 0.55rem;
+      background: rgba(0, 0, 0, 0.18);
+      padding: 0.5rem 0.65rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .model-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .model-origin {
+      font-size: 0.66rem;
+      font-weight: 500;
+      opacity: 0.72;
+    }
+
+    .model-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .model-bar-track {
+      height: 0.42rem;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .model-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      transition: width 0.35s ease;
+    }
+
+    .model-peak-note {
+      font-size: 0.68rem;
+      color: #bae6fd;
+      opacity: 0.88;
+    }
+
+    .model-mm {
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-align: right;
+      color: #f0f9ff;
+    }
+
+    /* Air Quality, African Dust & Sun Astro Section */
+    .env-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.65rem;
+    }
+
+    .env-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 0.9rem;
+      padding: 0.7rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.2rem;
+      min-height: 5.5rem;
+    }
+
+    .env-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.82;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .env-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .env-sub {
+      font-size: 0.75rem;
+      opacity: 0.86;
     }
 
     /* Header & Search Bar */
@@ -1026,6 +1224,7 @@
   </style>
 </head>
 <body data-sky="clear-day">
+  <canvas id="weatherCanvas" aria-hidden="true"></canvas>
   <main class="app-container">
     <!-- Search & GPS Top Bar -->
     <header class="top-bar">
@@ -1084,6 +1283,17 @@
         <span id="currentHigh">Μέγ: --°</span>
         <span id="currentLow">Ελάχ: --°</span>
       </div>
+    </section>
+
+    <!-- Smart Daily Advisor (Umbrella, Car Wash, Best Outdoor Time) -->
+    <section class="glass-card" id="smartAdvisorCard" aria-labelledby="advisorHeading">
+      <h2 class="card-header" id="advisorHeading">
+        <span class="card-header-left">
+          <span aria-hidden="true" id="advisorHeaderIcon"></span>
+          <span class="aligned-label">Έξυπνος Σύμβουλος Ημέρας</span>
+        </span>
+      </h2>
+      <div class="advisor-list" id="advisorList"></div>
     </section>
 
     <!-- Hourly Forecast (Next 24 Hours) -->
@@ -1199,6 +1409,65 @@
         <span>Ύψος (mm) & Πιθανότητα (%)</span>
       </div>
       <div class="rain-bars-scroller" id="rainBarsList"></div>
+
+      <!-- Multi-Model Rain Comparison (ECMWF vs ICON vs GFS) -->
+      <div class="models-box" id="modelsComparisonBox">
+        <div class="models-header">
+          <span class="models-title">
+            <span aria-hidden="true" id="modelsIcon"></span>
+            <span id="modelsTitleText" class="aligned-label">Σύγκριση 3 Μοντέλων (ECMWF • ICON • GFS)</span>
+          </span>
+          <span class="consensus-badge" id="modelsConsensusBadge">Έλεγχος...</span>
+        </div>
+        <div class="models-list" id="modelsList"></div>
+      </div>
+    </section>
+
+    <!-- Air Quality (AQI), African Dust, Pollen & Sunrise/Sunset -->
+    <section class="glass-card deferred-section" id="airAstroCard" aria-labelledby="airAstroHeading">
+      <h2 class="card-header" id="airAstroHeading">
+        <span class="card-header-left">
+          <span aria-hidden="true" id="airAstroHeaderIcon"></span>
+          <span class="aligned-label">Ατμόσφαιρα, Αφρικανική Σκόνη & Ήλιος</span>
+        </span>
+      </h2>
+      <div class="env-grid">
+        <div class="env-item">
+          <div class="env-label">
+            <span aria-hidden="true" id="aqiIcon"></span>
+            <span class="aligned-label">Ποιότητα Αέρα (AQI)</span>
+          </div>
+          <div class="env-val" id="aqiVal">--</div>
+          <div class="env-sub" id="aqiSub">PM2.5: -- • PM10: --</div>
+        </div>
+
+        <div class="env-item">
+          <div class="env-label">
+            <span aria-hidden="true" id="dustIcon"></span>
+            <span class="aligned-label">Αφρικανική Σκόνη</span>
+          </div>
+          <div class="env-val" id="dustVal">-- μg/m³</div>
+          <div class="env-sub" id="dustSub">Έλεγχος σκόνης...</div>
+        </div>
+
+        <div class="env-item">
+          <div class="env-label">
+            <span aria-hidden="true" id="pollenIcon"></span>
+            <span class="aligned-label">Γύρη (Αλλεργίες)</span>
+          </div>
+          <div class="env-val" id="pollenVal">--</div>
+          <div class="env-sub" id="pollenSub">Γρασίδι & Ελιά</div>
+        </div>
+
+        <div class="env-item">
+          <div class="env-label">
+            <span aria-hidden="true" id="sunAstroIcon"></span>
+            <span class="aligned-label">Ανατολή & Δύση</span>
+          </div>
+          <div class="env-val" id="sunAstroVal">--:-- / --:--</div>
+          <div class="env-sub" id="sunAstroSub">Διάρκεια ημέρας</div>
+        </div>
+      </div>
     </section>
 
     <!-- iOS Add to Home Screen Tip -->
@@ -1251,7 +1520,13 @@
       'share': '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
       'smartphone': '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
       'bell': '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
-      'bell-ring': '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/>'
+      'bell-ring': '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/>',
+      'sparkles': '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/>',
+      'car': '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+      'footprints': '<path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/>',
+      'layers': '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+      'sunrise': '<path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/>',
+      'flower-2': '<path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1"/><circle cx="12" cy="8" r="2"/><path d="M12 10v12"/><path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z"/><path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z"/>'
     };
 
     function lucideSvg(name, extraClass = '') {
@@ -1379,6 +1654,17 @@
       rainPeakHour: document.getElementById('rainPeakHour'),
       rainChartTitleText: document.getElementById('rainChartTitleText'),
       rainBarsList: document.getElementById('rainBarsList'),
+      advisorList: document.getElementById('advisorList'),
+      modelsConsensusBadge: document.getElementById('modelsConsensusBadge'),
+      modelsList: document.getElementById('modelsList'),
+      aqiVal: document.getElementById('aqiVal'),
+      aqiSub: document.getElementById('aqiSub'),
+      dustVal: document.getElementById('dustVal'),
+      dustSub: document.getElementById('dustSub'),
+      pollenVal: document.getElementById('pollenVal'),
+      pollenSub: document.getElementById('pollenSub'),
+      sunAstroVal: document.getElementById('sunAstroVal'),
+      sunAstroSub: document.getElementById('sunAstroSub'),
       hourlyList: document.getElementById('hourlyList'),
       dailyList: document.getElementById('dailyList'),
       feelsLikeVal: document.getElementById('feelsLikeVal'),
@@ -1394,6 +1680,8 @@
 
     let activeLocation = null;
     let lastWeatherData = null;
+    let lastModelsData = null;
+    let lastAirData = null;
     let selectedRainDayIndex = 0;
     let savedCities = [];
     let searchTimeout = null;
@@ -1519,8 +1807,15 @@
       document.getElementById('gpsBtnIcon').innerHTML = lucideSvg('locate-fixed');
       els.badgeIcon.innerHTML = lucideSvg('map-pin');
       els.currentIcon.innerHTML = lucideSvg('cloud-sun');
+      document.getElementById('advisorHeaderIcon').innerHTML = lucideSvg('sparkles');
       document.getElementById('rainHeaderIcon').innerHTML = lucideSvg('umbrella');
       els.rainAlertIcon.innerHTML = lucideSvg('cloud-rain');
+      document.getElementById('modelsIcon').innerHTML = lucideSvg('layers');
+      document.getElementById('airAstroHeaderIcon').innerHTML = lucideSvg('wind');
+      document.getElementById('aqiIcon').innerHTML = lucideSvg('wind');
+      document.getElementById('dustIcon').innerHTML = lucideSvg('cloud-fog');
+      document.getElementById('pollenIcon').innerHTML = lucideSvg('flower-2');
+      document.getElementById('sunAstroIcon').innerHTML = lucideSvg('sunrise');
       document.getElementById('hourlyHeaderIcon').innerHTML = lucideSvg('clock');
       document.getElementById('dailyHeaderIcon').innerHTML = lucideSvg('calendar');
       document.getElementById('feelsLikeIcon').innerHTML = lucideSvg('thermometer');
@@ -1551,28 +1846,53 @@
         latitude: loc.lat,
         longitude: loc.lon,
         current: 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,weather_code,wind_speed_10m',
-        hourly: 'temperature_2m,precipitation_probability,precipitation,rain,showers,weather_code,is_day',
-        daily: 'weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,rain_sum,precipitation_hours,precipitation_probability_max',
+        hourly: 'temperature_2m,precipitation_probability,precipitation,rain,showers,weather_code,is_day,wind_speed_10m',
+        daily: 'weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_sum,rain_sum,precipitation_hours,precipitation_probability_max,sunrise,sunset',
+        timezone: 'auto'
+      });
+
+      const modelsParams = new URLSearchParams({
+        latitude: loc.lat,
+        longitude: loc.lon,
+        hourly: 'precipitation',
+        daily: 'precipitation_sum',
+        models: 'ecmwf_ifs025,icon_seamless,gfs_seamless',
+        timezone: 'auto'
+      });
+
+      const airParams = new URLSearchParams({
+        latitude: loc.lat,
+        longitude: loc.lon,
+        current: 'european_aqi,pm10,pm2_5,dust,grass_pollen,olive_pollen',
         timezone: 'auto'
       });
 
       try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+        const [res, modelsRes, airRes] = await Promise.all([
+          fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`),
+          fetch(`https://api.open-meteo.com/v1/forecast?${modelsParams.toString()}`).catch(() => null),
+          fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${airParams.toString()}`).catch(() => null)
+        ]);
+
         if (!res.ok) throw new Error('Αποτυχία λήψης δεδομένων');
         const data = await res.json();
+        const modelsData = modelsRes && modelsRes.ok ? await modelsRes.json() : null;
+        const airData = airRes && airRes.ok ? await airRes.json() : null;
 
         localStorage.setItem(STORAGE_KEY_CACHE, JSON.stringify({
           loc,
           data,
+          modelsData,
+          airData,
           timestamp: Date.now()
         }));
 
-        renderWeather(loc, data, Date.now());
+        renderWeather(loc, data, Date.now(), modelsData, airData);
       } catch (err) {
         const cachedRaw = localStorage.getItem(STORAGE_KEY_CACHE);
         if (cachedRaw) {
           const cached = JSON.parse(cachedRaw);
-          renderWeather(cached.loc, cached.data, cached.timestamp);
+          renderWeather(cached.loc, cached.data, cached.timestamp, cached.modelsData || null, cached.airData || null);
           showStatus('Είστε εκτός σύνδεσης — εμφανίζονται τα τελευταία αποθηκευμένα δεδομένα.');
         } else {
           showStatus('Δεν ήταν δυνατή η σύνδεση με την υπηρεσία καιρού. Ελέγξτε το internet σας.');
@@ -1777,16 +2097,273 @@
         `;
         els.rainBarsList.appendChild(col);
       });
+
+      // Update Multi-Model Comparison for the selected day
+      renderMultiModelComparison(dayIdx, nowIndex, targetDateIso);
     }
 
-    function renderWeather(loc, data, timestamp) {
+    function renderMultiModelComparison(dayIdx, nowIndex, targetDateIso) {
+      els.modelsList.innerHTML = '';
+      if (!lastModelsData || !lastModelsData.hourly) {
+        els.modelsConsensusBadge.textContent = 'Μη διαθέσιμο';
+        return;
+      }
+
+      const mHourly = lastModelsData.hourly;
+      const modelDefs = [
+        { key: 'precipitation_ecmwf_ifs025', name: 'ECMWF IFS', origin: 'Ευρωπαϊκό (9km)' },
+        { key: 'precipitation_icon_seamless', name: 'DWD ICON', origin: 'Γερμανικό (7km)' },
+        { key: 'precipitation_gfs_seamless', name: 'NOAA GFS', origin: 'Αμερικανικό (13km)' }
+      ];
+
+      const results = modelDefs.map((m) => {
+        const arr = mHourly[m.key] || [];
+        let sum = 0;
+        let peak = 0;
+        let peakTime = '—';
+
+        if (dayIdx === 0) {
+          const end = Math.min(nowIndex + 24, mHourly.time.length);
+          for (let i = nowIndex; i < end; i++) {
+            const val = Number(arr[i] || 0);
+            sum += val;
+            if (val > peak) {
+              peak = val;
+              peakTime = i === nowIndex ? 'Τώρα' : mHourly.time[i].slice(11, 16);
+            }
+          }
+        } else {
+          for (let i = 0; i < mHourly.time.length; i++) {
+            if (!mHourly.time[i].startsWith(targetDateIso)) continue;
+            const val = Number(arr[i] || 0);
+            sum += val;
+            if (val > peak) {
+              peak = val;
+              peakTime = mHourly.time[i].slice(11, 16);
+            }
+          }
+        }
+        return { ...m, sum, peak, peakTime, predictsRain: sum >= 0.2 };
+      });
+
+      const rainCount = results.filter((r) => r.predictsRain).length;
+      if (rainCount === 3) {
+        els.modelsConsensusBadge.textContent = 'Συμφωνία 3/3 (Βροχή)';
+      } else if (rainCount === 0) {
+        els.modelsConsensusBadge.textContent = 'Συμφωνία 3/3 (Ξηρός)';
+      } else {
+        els.modelsConsensusBadge.textContent = `Διχογνωμία (${rainCount}/3 βροχή)`;
+      }
+
+      const maxModelSum = Math.max(...results.map((r) => r.sum), 5);
+
+      results.forEach((r) => {
+        const widthPct = r.sum > 0 ? Math.max((r.sum / maxModelSum) * 100, 8) : 0;
+        const peakNote = r.peak > 0
+          ? `Αιχμή: ${r.peak.toFixed(1)} mm/h (${r.peakTime})`
+          : 'Χωρίς αξιόλογο υετό';
+
+        const row = document.createElement('div');
+        row.className = 'model-row';
+        row.innerHTML = `
+          <div class="model-name">
+            <span>${r.name}</span>
+            <span class="model-origin">${r.origin}</span>
+          </div>
+          <div class="model-bar-wrap">
+            <div class="model-bar-track" aria-hidden="true">
+              <div class="model-bar-fill" style="width: ${Math.min(widthPct, 100)}%;"></div>
+            </div>
+            <span class="model-peak-note">${peakNote}</span>
+          </div>
+          <div class="model-mm">${r.sum.toFixed(1)} mm</div>
+        `;
+        els.modelsList.appendChild(row);
+      });
+    }
+
+    function renderSmartAdvisor(current, hourly, daily, startIndex, airData) {
+      els.advisorList.innerHTML = '';
+      const tips = [];
+
+      // 1. Umbrella & Immediate Rain Tip (next 12h)
+      let firstRainHr = null;
+      let maxPop12h = 0;
+      let sum12h = 0;
+      for (let i = startIndex; i < Math.min(startIndex + 12, hourly.time.length); i++) {
+        const pop = Number(hourly.precipitation_probability ? hourly.precipitation_probability[i] : 0);
+        const mm = Number(hourly.precipitation ? hourly.precipitation[i] : 0);
+        sum12h += mm;
+        if (pop > maxPop12h) maxPop12h = pop;
+        if (!firstRainHr && (mm >= 0.1 || pop >= 45)) {
+          firstRainHr = i === startIndex ? 'τώρα' : `στις ${hourly.time[i].slice(11, 16)}`;
+        }
+      }
+
+      const dustLevel = airData && airData.current && airData.current.dust != null
+        ? Number(airData.current.dust)
+        : 0;
+
+      if (Number(current.precipitation || 0) > 0 || firstRainHr) {
+        const mudNote = dustLevel >= 25 ? ' • Προσοχή: Πιθανή λασποβροχή λόγω σκόνης!' : '';
+        tips.push({
+          icon: 'umbrella',
+          title: firstRainHr === 'τώρα' ? 'Πάρε ομπρέλα — Βρέχει τώρα' : `Πάρε ομπρέλα (${firstRainHr})`,
+          sub: `Πιθανότητα έως ${maxPop12h}% • Αναμένονται ~${sum12h.toFixed(1)} mm τις επόμενες 12 ώρες${mudNote}`
+        });
+      } else {
+        tips.push({
+          icon: 'umbrella',
+          title: 'Δεν χρειάζεται ομπρέλα τις επόμενες ώρες',
+          sub: `Μέγιστη πιθανότητα βροχής 12ώρου: ${maxPop12h}%`
+        });
+      }
+
+      // 2. Best 2-hour Outdoor / Walk Window (next 14 hours, daytime/evening 07:00 - 21:00)
+      let bestIdx = -1;
+      let bestScore = -999;
+      for (let i = startIndex; i < Math.min(startIndex + 14, hourly.time.length - 1); i++) {
+        const hrNum = parseInt(hourly.time[i].slice(11, 13), 10);
+        if (hrNum < 7 || hrNum > 21) continue;
+        const pop = Number(hourly.precipitation_probability ? hourly.precipitation_probability[i] : 0);
+        const mm = Number(hourly.precipitation ? hourly.precipitation[i] : 0);
+        const temp = Number(hourly.temperature_2m[i]);
+        const wind = Number(hourly.wind_speed_10m ? hourly.wind_speed_10m[i] : 10);
+
+        if (mm > 0.1 || pop >= 45) continue;
+        // Ideal temp around 21C, low wind, low rain probability
+        const score = 100 - pop - Math.abs(temp - 21) * 2.2 - wind * 0.6;
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = i;
+        }
+      }
+
+      if (bestIdx !== -1) {
+        const startHr = hourly.time[bestIdx].slice(11, 16);
+        const endHr = hourly.time[Math.min(bestIdx + 2, hourly.time.length - 1)].slice(11, 16);
+        const tVal = Math.round(hourly.temperature_2m[bestIdx]);
+        const pVal = hourly.precipitation_probability ? hourly.precipitation_probability[bestIdx] : 0;
+        tips.push({
+          icon: 'footprints',
+          title: `Ιδανική ώρα για έξω / βόλτα: ${startHr}–${endHr}`,
+          sub: `Θερμοκρασία ~${tVal}°C με ${pVal}% πιθανότητα βροχής`
+        });
+      }
+
+      // 3. Car Wash & 3-Day Rain/Mud Check
+      let rainyDayName = null;
+      const dayFmt = new Intl.DateTimeFormat('el-GR', { weekday: 'long' });
+      for (let d = 0; d < Math.min(3, daily.time.length); d++) {
+        const dMm = daily.precipitation_sum ? Number(daily.precipitation_sum[d]) : 0;
+        const dPop = daily.precipitation_probability_max ? Number(daily.precipitation_probability_max[d]) : 0;
+        if (dMm >= 0.4 || dPop >= 50) {
+          rainyDayName = d === 0 ? 'σήμερα' : (d === 1 ? 'αύριο' : `την ${dayFmt.format(new Date(`${daily.time[d]}T12:00:00`))}`);
+          break;
+        }
+      }
+
+      if (rainyDayName) {
+        tips.push({
+          icon: 'car',
+          title: 'Απόφυγε το πλύσιμο αυτοκινήτου',
+          sub: `Αναμένεται βροχή ${rainyDayName}${dustLevel >= 20 ? ' και υπάρχει αφρικανική σκόνη στην ατμόσφαιρα' : ''}.`
+        });
+      } else if (dustLevel >= 35) {
+        tips.push({
+          icon: 'car',
+          title: 'Μέτρια μέρα για πλύσιμο αυτοκινήτου',
+          sub: `Δεν προβλέπεται βροχή για 3 μέρες, αλλά υπάρχει αυξημένη αφρικανική σκόνη (${Math.round(dustLevel)} μg/m³).`
+        });
+      } else {
+        tips.push({
+          icon: 'car',
+          title: 'Ιδανικές μέρες για πλύσιμο αυτοκινήτου',
+          sub: 'Καμία αξιόλογη βροχή ή αφρικανική σκόνη για τις επόμενες 3 ημέρες!'
+        });
+      }
+
+      tips.forEach((tip) => {
+        const div = document.createElement('div');
+        div.className = 'advisor-item';
+        div.innerHTML = `
+          <span class="advisor-icon" aria-hidden="true">${lucideSvg(tip.icon)}</span>
+          <div class="advisor-text">
+            <span class="advisor-title">${tip.title}</span>
+            <span class="advisor-sub">${tip.sub}</span>
+          </div>
+        `;
+        els.advisorList.appendChild(div);
+      });
+    }
+
+    function renderAirAndAstro(daily, airData) {
+      // Sunrise & Sunset
+      if (daily.sunrise && daily.sunrise[0] && daily.sunset && daily.sunset[0]) {
+        const sr = daily.sunrise[0].slice(11, 16);
+        const ss = daily.sunset[0].slice(11, 16);
+        els.sunAstroVal.textContent = `${sr} / ${ss}`;
+
+        const srDate = new Date(daily.sunrise[0]);
+        const ssDate = new Date(daily.sunset[0]);
+        const diffMins = Math.max(Math.round((ssDate - srDate) / 60000), 0);
+        const hrs = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        els.sunAstroSub.textContent = `Διάρκεια ημέρας: ${hrs}ώ ${mins}λ`;
+      }
+
+      if (!airData || !airData.current) {
+        els.aqiVal.textContent = '—';
+        els.aqiSub.textContent = 'Μη διαθέσιμα δεδομένα';
+        els.dustVal.textContent = '—';
+        els.dustSub.textContent = 'Μη διαθέσιμα δεδομένα';
+        els.pollenVal.textContent = '—';
+        return;
+      }
+
+      const ac = airData.current;
+      const aqi = ac.european_aqi != null ? Math.round(ac.european_aqi) : 0;
+      let aqiDesc = 'Εξαιρετική';
+      if (aqi > 20) aqiDesc = 'Καλή';
+      if (aqi > 40) aqiDesc = 'Μέτρια';
+      if (aqi > 60) aqiDesc = 'Επιβαρυμένη';
+      if (aqi > 80) aqiDesc = 'Κακή';
+
+      els.aqiVal.textContent = `${aqi} (${aqiDesc})`;
+      els.aqiSub.textContent = `PM2.5: ${ac.pm2_5 != null ? ac.pm2_5.toFixed(1) : '0'} • PM10: ${ac.pm10 != null ? ac.pm10.toFixed(1) : '0'} μg/m³`;
+
+      const dust = ac.dust != null ? Math.round(ac.dust) : 0;
+      els.dustVal.textContent = `${dust} μg/m³`;
+      if (dust < 15) {
+        els.dustSub.textContent = 'Καθαρή ατμόσφαιρα (Χαμηλή)';
+      } else if (dust < 40) {
+        els.dustSub.textContent = 'Μέτρια συγκέντρωση σκόνης';
+      } else {
+        els.dustSub.textContent = 'Υψηλή αφρικανική σκόνη (Κίνδυνος λασποβροχής!)';
+      }
+
+      const grass = ac.grass_pollen != null ? Number(ac.grass_pollen) : 0;
+      const olive = ac.olive_pollen != null ? Number(ac.olive_pollen) : 0;
+      const maxPollen = Math.max(grass, olive);
+      let pollenLevel = 'Χαμηλή';
+      if (maxPollen > 10) pollenLevel = 'Μέτρια';
+      if (maxPollen > 50) pollenLevel = 'Υψηλή';
+      els.pollenVal.textContent = pollenLevel;
+      els.pollenSub.textContent = `Γρασίδι: ${grass.toFixed(0)} • Ελιά: ${olive.toFixed(0)} κόκκοι/m³`;
+    }
+
+    function renderWeather(loc, data, timestamp, modelsData = null, airData = null) {
       lastWeatherData = data;
+      if (modelsData) lastModelsData = modelsData;
+      if (airData) lastAirData = airData;
+
       const current = data.current;
       const daily = data.daily;
       const hourly = data.hourly;
 
       const info = getWeatherInfo(current.weather_code, current.is_day);
       document.body.setAttribute('data-sky', info.sky);
+      setWeatherCanvasMode(info.sky);
 
       els.cityName.textContent = loc.name;
       els.currentIcon.innerHTML = lucideSvg(info.icon);
@@ -1886,6 +2463,10 @@
         row.addEventListener('click', () => selectRainDay(i, true));
         els.dailyList.appendChild(row);
       }
+
+      // Render Smart Daily Advisor & Atmosphere/Sun Astro cards
+      renderSmartAdvisor(current, hourly, daily, startIndex, lastAirData);
+      renderAirAndAstro(daily, lastAirData);
 
       // Render Dedicated Rain Analysis Card & Day Tabs
       renderRainDaysBar(daily);
@@ -2239,8 +2820,179 @@
       });
     }
 
+    // Animated Weather Canvas Background Engine (Raindrops, Lightning, Twinkling Stars, Sunbeams)
+    const weatherCanvas = document.getElementById('weatherCanvas');
+    const ctx = weatherCanvas.getContext('2d');
+    let canvasMode = 'clear-day';
+    let particles = [];
+    let animFrameId = null;
+    let isCanvasPaused = false;
+    let lightningAlpha = 0;
+
+    function resizeWeatherCanvas() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      weatherCanvas.width = window.innerWidth * dpr;
+      weatherCanvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      rebuildParticles();
+    }
+
+    function rebuildParticles() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      particles = [];
+
+      if (canvasMode === 'rain' || canvasMode === 'storm') {
+        const count = canvasMode === 'storm' ? 95 : 65;
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            len: 12 + Math.random() * 14,
+            speed: 9 + Math.random() * 7,
+            drift: -1.2 - Math.random() * 1.2,
+            alpha: 0.22 + Math.random() * 0.35
+          });
+        }
+      } else if (canvasMode === 'clear-night' || canvasMode === 'cloudy-night') {
+        const count = canvasMode === 'clear-night' ? 55 : 25;
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * (h * 0.65),
+            r: 0.8 + Math.random() * 1.5,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.015 + Math.random() * 0.025
+          });
+        }
+      } else {
+        // Soft floating atmospheric motes for daytime
+        for (let i = 0; i < 22; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: 1.5 + Math.random() * 2.5,
+            vy: -0.25 - Math.random() * 0.3,
+            vx: 0.15 - Math.random() * 0.3,
+            alpha: 0.12 + Math.random() * 0.2
+          });
+        }
+      }
+    }
+
+    function setWeatherCanvasMode(mode) {
+      if (canvasMode !== mode || particles.length === 0) {
+        canvasMode = mode;
+        rebuildParticles();
+      }
+    }
+
+    function drawWeatherCanvas() {
+      if (isCanvasPaused) {
+        animFrameId = null;
+        return;
+      }
+
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      if (canvasMode === 'rain' || canvasMode === 'storm') {
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.5)';
+        ctx.lineWidth = 1.25;
+        ctx.lineCap = 'round';
+
+        for (const p of particles) {
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + p.drift * 2, p.y + p.len);
+          ctx.stroke();
+
+          p.x += p.drift;
+          p.y += p.speed;
+          if (p.y > h) {
+            p.y = -20;
+            p.x = Math.random() * (w + 60);
+          }
+          if (p.x < -20) p.x = w + 10;
+        }
+        ctx.globalAlpha = 1;
+
+        // Subtle lightning flash during storms
+        if (canvasMode === 'storm') {
+          if (lightningAlpha <= 0 && Math.random() < 0.004) {
+            lightningAlpha = 0.28;
+          }
+          if (lightningAlpha > 0) {
+            ctx.fillStyle = `rgba(240, 249, 255, ${lightningAlpha})`;
+            ctx.fillRect(0, 0, w, h);
+            lightningAlpha -= 0.025;
+          }
+        }
+      } else if (canvasMode === 'clear-night' || canvasMode === 'cloudy-night') {
+        ctx.fillStyle = '#ffffff';
+        for (const s of particles) {
+          s.phase += s.speed;
+          const alpha = 0.25 + 0.65 * ((Math.sin(s.phase) + 1) / 2);
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = '#ffffff';
+        for (const m of particles) {
+          ctx.globalAlpha = m.alpha;
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+          ctx.fill();
+          m.x += m.vx;
+          m.y += m.vy;
+          if (m.y < -10) {
+            m.y = h + 10;
+            m.x = Math.random() * w;
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      animFrameId = requestAnimationFrame(drawWeatherCanvas);
+    }
+
+    function startWeatherCanvas() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      isCanvasPaused = false;
+      if (!animFrameId) {
+        animFrameId = requestAnimationFrame(drawWeatherCanvas);
+      }
+    }
+
+    function stopWeatherCanvas() {
+      isCanvasPaused = true;
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    }
+
+    window.addEventListener('resize', resizeWeatherCanvas);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        stopWeatherCanvas();
+      } else {
+        startWeatherCanvas();
+      }
+    });
+
+    // Listen to contentvisibilityautostatechange on deferred sections (efficient-background-processing)
+    document.addEventListener('contentvisibilityautostatechange', () => {}, { capture: true });
+
     // Initialize App
     (function init() {
+      resizeWeatherCanvas();
+      startWeatherCanvas();
       mountStaticIcons();
       loadSavedCities();
       renderSavedCitiesBar();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'weatherbuddy-v2';
+const CACHE_NAME = 'weatherbuddy-v3';
 const ASSETS = [
   './',
   './index.html',

@@ -1069,6 +1069,10 @@
           <span id="saveCityIcon" aria-hidden="true"></span>
           <span id="saveCityText" class="aligned-label">Αποθήκευση πόλης</span>
         </button>
+        <button type="button" id="notifyRainBtn" class="save-city-btn" title="Ενεργοποίηση ειδοποιήσεων βροχής">
+          <span id="notifyRainIcon" aria-hidden="true"></span>
+          <span id="notifyRainText" class="aligned-label">Ειδοποιήσεις Βροχής</span>
+        </button>
       </div>
       <h1 class="city-title" id="cityName">—</h1>
       <div class="hero-main">
@@ -1245,7 +1249,9 @@
       'cloud-snow': '<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M8 15h.01"/><path d="M8 19h.01"/><path d="M12 17h.01"/><path d="M12 21h.01"/><path d="M16 15h.01"/><path d="M16 19h.01"/>',
       'cloud-lightning': '<path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973"/><path d="m13 12-3 5h4l-3 5"/>',
       'share': '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
-      'smartphone': '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>'
+      'smartphone': '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+      'bell': '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+      'bell-ring': '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/>'
     };
 
     function lucideSvg(name, extraClass = '') {
@@ -1343,6 +1349,9 @@
       saveCityBtn: document.getElementById('saveCityBtn'),
       saveCityIcon: document.getElementById('saveCityIcon'),
       saveCityText: document.getElementById('saveCityText'),
+      notifyRainBtn: document.getElementById('notifyRainBtn'),
+      notifyRainIcon: document.getElementById('notifyRainIcon'),
+      notifyRainText: document.getElementById('notifyRainText'),
       statusBanner: document.getElementById('statusBanner'),
       statusText: document.getElementById('statusText'),
       badgeIcon: document.getElementById('badgeIcon'),
@@ -1882,6 +1891,9 @@
       renderRainDaysBar(daily);
       renderRainAnalysis(current, hourly, daily, startIndex, selectedRainDayIndex);
 
+      // Evaluate and trigger rain notification if enabled
+      evaluateRainNotification(loc, current, hourly, startIndex, false);
+
       const timeFormatted = new Intl.DateTimeFormat('el-GR', {
         hour: '2-digit',
         minute: '2-digit'
@@ -2056,6 +2068,160 @@
       toggleSaveCurrentCity();
     });
 
+    // Rain Notifications System (iOS 16.4+ PWA & Desktop/Android)
+    const STORAGE_KEY_RAIN_NOTIFY = 'weatherbuddy_rain_notify_enabled';
+    const STORAGE_KEY_LAST_ALERT = 'weatherbuddy_last_rain_alert_key';
+
+    function isNotifyEnabled() {
+      return (
+        'Notification' in window &&
+        Notification.permission === 'granted' &&
+        localStorage.getItem(STORAGE_KEY_RAIN_NOTIFY) === '1'
+      );
+    }
+
+    function updateNotifyButtonState() {
+      const enabled = isNotifyEnabled();
+      els.notifyRainBtn.classList.toggle('saved', enabled);
+      els.notifyRainIcon.innerHTML = lucideSvg(enabled ? 'bell-ring' : 'bell');
+      els.notifyRainText.textContent = enabled ? 'Ειδοποιήσεις Ενεργές' : 'Ειδοποιήσεις Βροχής';
+    }
+
+    async function sendSystemNotification(title, body, tag = 'weatherbuddy-rain-alert') {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          if (reg && reg.showNotification) {
+            await reg.showNotification(title, {
+              body,
+              icon: 'icon-180.png',
+              badge: 'icon-180.png',
+              tag,
+              renotify: true,
+              data: { url: './index.html#rainCard' }
+            });
+            return;
+          }
+        }
+        new Notification(title, { body, icon: 'icon-180.png', tag });
+      } catch {
+        // Fallback if Notification constructor is restricted
+      }
+    }
+
+    function evaluateRainNotification(loc, current, hourly, startIndex, forceTest = false) {
+      if (!forceTest && !isNotifyEnabled()) return;
+
+      const currentPrecip = Number(current.precipitation || 0);
+      const sliceEnd = Math.min(startIndex + 12, hourly.time.length); // Check next 12 hours
+      let nextRainHour = null;
+      let nextRainPop = 0;
+      let nextRainMm = 0;
+      let total12hMm = 0;
+
+      for (let i = startIndex; i < sliceEnd; i++) {
+        const pop = Number(hourly.precipitation_probability ? hourly.precipitation_probability[i] : 0);
+        const mm = Number(hourly.precipitation ? hourly.precipitation[i] : 0);
+        total12hMm += mm;
+        if (!nextRainHour && i > startIndex && (mm >= 0.1 || pop >= 45)) {
+          nextRainHour = hourly.time[i].slice(11, 16);
+          nextRainPop = pop;
+          nextRainMm = mm;
+        }
+      }
+
+      if (currentPrecip > 0) {
+        const alertKey = `${loc.name}-${current.time.slice(0, 13)}-now`;
+        if (forceTest || localStorage.getItem(STORAGE_KEY_LAST_ALERT) !== alertKey) {
+          localStorage.setItem(STORAGE_KEY_LAST_ALERT, alertKey);
+          sendSystemNotification(
+            `🌧️ Βρέχει τώρα — ${loc.name}`,
+            `Ένταση: ${currentPrecip.toFixed(1)} mm/h (${describeRainRate(currentPrecip)}). Σύνολο 12ώρου: ${total12hMm.toFixed(1)} mm.`
+          );
+        }
+      } else if (nextRainHour) {
+        const alertKey = `${loc.name}-${current.time.slice(0, 10)}-${nextRainHour}`;
+        if (forceTest || localStorage.getItem(STORAGE_KEY_LAST_ALERT) !== alertKey) {
+          localStorage.setItem(STORAGE_KEY_LAST_ALERT, alertKey);
+          sendSystemNotification(
+            `☔ Αναμένεται βροχή στις ${nextRainHour} (${loc.name})`,
+            `Πιθανότητα ${nextRainPop}% • Εκτιμώμενο ύψος: ${nextRainMm.toFixed(1)} mm (Σύνολο 12ώρου: ${total12hMm.toFixed(1)} mm).`
+          );
+        }
+      } else if (forceTest) {
+        sendSystemNotification(
+          `✅ Ειδοποιήσεις Βροχής Ενεργές (${loc.name})`,
+          'Δεν αναμένεται βροχή τις επόμενες 12 ώρες. Θα ειδοποιηθείτε μόλις προβλεφθεί βροχόπτωση!'
+        );
+      }
+    }
+
+    async function toggleRainNotifications() {
+      const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isStandaloneMode = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+      if (!('Notification' in window)) {
+        if (isIosDevice && !isStandaloneMode) {
+          showStatus('Στο iPhone, οι ειδοποιήσεις λειτουργούν αφού προσθέσετε την εφαρμογή στην Οθόνη Αφετηρίας (Share → Προσθήκη στην Οθόνη Αφετηρίας).');
+        } else {
+          showStatus('Ο browser σας δεν υποστηρίζει ειδοποιήσεις Web Notifications.');
+        }
+        return;
+      }
+
+      if (isNotifyEnabled()) {
+        localStorage.setItem(STORAGE_KEY_RAIN_NOTIFY, '0');
+        updateNotifyButtonState();
+        showStatus('Οι ειδοποιήσεις βροχής απενεργοποιήθηκαν.');
+        return;
+      }
+
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        showStatus('Δεν δόθηκε άδεια για ειδοποιήσεις στις ρυθμίσεις της συσκευής.');
+        updateNotifyButtonState();
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEY_RAIN_NOTIFY, '1');
+      updateNotifyButtonState();
+      showStatus('');
+
+      if (lastWeatherData && activeLocation) {
+        const nowIsoHour = lastWeatherData.current.time.slice(0, 13);
+        let startIndex = lastWeatherData.hourly.time.findIndex((t) => t.slice(0, 13) >= nowIsoHour);
+        if (startIndex === -1) startIndex = 0;
+        evaluateRainNotification(activeLocation, lastWeatherData.current, lastWeatherData.hourly, startIndex, true);
+      }
+    }
+
+    els.notifyRainBtn.addEventListener('click', () => {
+      toggleRainNotifications();
+    });
+
+    // Listen for Service Worker message when user taps a notification
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SCROLL_TO_RAIN') {
+          document.getElementById('rainCard').scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
+
+    // Automatically re-check weather & rain alerts when app comes to foreground or every 30 minutes
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && activeLocation) {
+        fetchWeatherForLocation(activeLocation);
+      }
+    });
+
+    setInterval(() => {
+      if (activeLocation) {
+        fetchWeatherForLocation(activeLocation);
+      }
+    }, 30 * 60 * 1000);
+
     // iOS Standalone Banner Check
     const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
     if (!isStandalone && !localStorage.getItem(STORAGE_KEY_DISMISS_IOS)) {
@@ -2078,6 +2244,7 @@
       mountStaticIcons();
       loadSavedCities();
       renderSavedCitiesBar();
+      updateNotifyButtonState();
 
       const savedRaw = localStorage.getItem(STORAGE_KEY_LOCATION);
       if (savedRaw) {

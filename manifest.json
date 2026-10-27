@@ -1,0 +1,31 @@
+{
+  "name": "WeatherBuddy - Καιρός",
+  "short_name": "WeatherBuddy",
+  "description": "Εφαρμογή καιρού με αυτόματο εντοπισμό τοποθεσίας και αναζήτηση πόλης",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f2027",
+  "theme_color": "#1e65a7",
+  "lang": "el",
+  "icons": [
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

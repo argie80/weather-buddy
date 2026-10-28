@@ -736,66 +736,45 @@
       gap: 0.2rem;
     }
 
-    .hero-top-row {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin-bottom: 0.3rem;
-    }
-
-    .smart-menu-trigger {
-      min-height: 2.25rem;
-      padding: 0.38rem 0.82rem;
-      border-radius: 999px;
+    .smart-menu-trigger,
+    .location-badge {
+      position: absolute;
+      top: 0.15rem;
+      width: 2.45rem;
+      height: 2.45rem;
+      padding: 0;
+      border-radius: 50%;
       border: 1px solid var(--card-border);
       background: var(--card-bg);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       color: #ffffff;
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 1rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.38rem;
-      flex-shrink: 0;
+      justify-content: center;
       scale: 1;
       transition: scale 0.15s, background 0.2s;
-    }
-
-    .smart-menu-trigger:hover {
-      background: rgba(255, 255, 255, 0.28);
-    }
-
-    .smart-menu-trigger:active {
-      scale: 0.95;
+      z-index: 5;
     }
 
     .location-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #ffffff;
-      padding: 0.32rem 0.72rem;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: background 0.2s;
-      max-width: calc(100% - 6.5rem);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      left: 0;
     }
 
+    .smart-menu-trigger {
+      right: 0;
+    }
+
+    .smart-menu-trigger:hover,
     .location-badge:hover {
-      background: rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .smart-menu-trigger:active,
+    .location-badge:active {
+      scale: 0.92;
     }
 
     .city-title {
@@ -803,6 +782,7 @@
       font-weight: 700;
       letter-spacing: -0.02em;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      padding: 0 2.85rem;
     }
 
     .hero-main {
@@ -1350,32 +1330,29 @@
 
     <!-- Current Weather Hero (Starts immediately at top of screen) -->
     <section class="hero-weather" aria-live="polite">
-      <div class="hero-top-row">
-        <button
-          type="button"
-          class="location-badge"
-          id="locationBadge"
-          command="show-modal"
-          commandfor="smartMenuDialog"
-          title="Πάτησε για αλλαγή πόλης ή επιλογές"
-        >
-          <span id="badgeIcon" aria-hidden="true"></span>
-          <span id="badgeText" class="aligned-label">Φόρτωση...</span>
-        </button>
+      <button
+        type="button"
+        class="location-badge"
+        id="locationBadge"
+        command="show-modal"
+        commandfor="smartMenuDialog"
+        aria-label="Τοποθεσία"
+        title="Πάτησε για αλλαγή πόλης ή επιλογές"
+      >
+        <span id="badgeIcon" aria-hidden="true"></span>
+      </button>
 
-        <button
-          type="button"
-          id="smartMenuBtn"
-          class="smart-menu-trigger"
-          command="show-modal"
-          commandfor="smartMenuDialog"
-          aria-label="Άνοιγμα έξυπνου μενού επιλογών και πόλεων"
-          title="Πόλεις, Αναζήτηση & Επιλογές"
-        >
-          <span aria-hidden="true" id="smartMenuBtnIcon"></span>
-          <span class="aligned-label">Μενού</span>
-        </button>
-      </div>
+      <button
+        type="button"
+        id="smartMenuBtn"
+        class="smart-menu-trigger"
+        command="show-modal"
+        commandfor="smartMenuDialog"
+        aria-label="Άνοιγμα έξυπνου μενού επιλογών και πόλεων"
+        title="Πόλεις, Αναζήτηση & Επιλογές"
+      >
+        <span aria-hidden="true" id="smartMenuBtnIcon"></span>
+      </button>
 
       <h1 class="city-title" id="cityName">—</h1>
       <div class="hero-main">
@@ -1808,8 +1785,8 @@
       notifyRainText: document.getElementById('notifyRainText'),
       statusBanner: document.getElementById('statusBanner'),
       statusText: document.getElementById('statusText'),
+      locationBadge: document.getElementById('locationBadge'),
       badgeIcon: document.getElementById('badgeIcon'),
-      badgeText: document.getElementById('badgeText'),
       cityName: document.getElementById('cityName'),
       currentIcon: document.getElementById('currentIcon'),
       currentTemp: document.getElementById('currentTemp'),
@@ -2031,7 +2008,7 @@
       showStatus('');
       els.refreshBtn.classList.add('spinning');
       els.badgeIcon.innerHTML = lucideSvg(loc.isGps ? 'navigation' : 'map-pin');
-      els.badgeText.textContent = loc.isGps ? 'Τρέχουσα Τοποθεσία (GPS)' : (loc.country || 'Επιλεγμένη Πόλη');
+      els.locationBadge.title = loc.isGps ? 'Τρέχουσα Τοποθεσία (GPS)' : (loc.country || 'Επιλεγμένη Πόλη');
       els.cityName.textContent = loc.name;
       updateSaveButtonState();
 
@@ -2708,7 +2685,7 @@
       }
 
       els.badgeIcon.innerHTML = lucideSvg('locate-fixed');
-      els.badgeText.textContent = 'Εντοπισμός GPS...';
+      els.locationBadge.title = 'Εντοπισμός GPS...';
 
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
